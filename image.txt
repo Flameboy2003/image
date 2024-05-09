@@ -1,0 +1,131 @@
+#Tpyramid
+import cv2
+import numpy as np 
+img  = cv2.imread("spacex.jpg")
+levels = 5
+pyramid  = [img]
+for _ in range(levels-1):
+    img = cv2.pyrDown(img)
+    pyramid.append(img)
+for i,img in enumerate(pyramid):
+    cv2.imshow(f"Levels {i}",img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+------------------------------------------
+#Quad tree
+import matplotlib.pyplot as plt
+import cv2
+import numpy as np 
+img = cv2.imread("spacex.jpg")
+from operator import add
+from functools import reduce 
+half = np.array_split(img,2)
+res = map(lambda x:np.array_split(x,2,axis=1),half)
+split = reduce(add,res)
+fig,axs = plt.subplots(2,2)
+axs[0,0].imshow(split[0])
+axs[0,1].imshow(split[1])
+axs[1,0].imshow(split[2])
+axs[1,1].imshow(split[3])
+plt.show()
+top = np.concatenate((split[0],split[1]),axis=1)
+bottom = np.concatenate((split[2],split[3]),axis=1)
+full = np.concatenate((top,bottom),axis=0)
+plt.imshow(full)
+plt.show()
+
+----------------------------------------------------------------------
+#Geometric transformation
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+image  = cv2.imread("spacex.jpg")
+
+plt.imshow(image)
+plt.show()
+
+rotateMatrix = cv2.getRotationMatrix2D((image.shape[0]/2,image.shape[1]/2),90,1)
+rotatedImage = cv2.warpAffine(image,rotateMatrix,(image.shape[0],image.shape[1])) 
+
+scaleImage = cv2.resize(image,None,fx=0.5,fy=0.5)
+
+cv2.imshow("scale Image",scaleImage)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+skewMatrix = np.float32([[1,0.2,0],[0.1,1,0]])
+skewImage = cv2.warpAffine(image,skewMatrix,(image.shape[0],image.shape[1]))
+
+
+affineMatrix = cv2.getAffineTransform(np.float32([[50, 50], [200, 50],[50, 200]]),np.float32([[10, 100],[200, 50], [100, 250]]))
+affineImage = cv2.warpAffine(image,affineMatrix,(image.shape[1],image.shape[0]))
+
+cv2.imshow("Affine Image",affineImage)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+src = np.float32([[100,100],[10,1500],[2600,1500],[2500,250]])
+dest = np.float32([[0,500],[500,1600],[2700,100],[2000,5]])
+
+biliearMatrix  = cv2.getPerspectiveTransform(src,dest)
+bilinearImage = cv2.warpPerspective(image,biliearMatrix,(image.shape[1],image.shape[0]))
+
+cv2.imshow("bilinear Image",bilinearImage)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+#Object detection
+import torch 
+from PIL import Image
+import cv2 
+model = torch.hub.load("ultralytics/yolov5",'yolov5s')
+img = Image.open("spacex.jpg")
+result = model(img)
+result.show()
+------------------------------------------------------------------------
+
+#Edge detection 
+
+import cv2
+def motion(path):
+    cap = cv2.VideoCapture(path)
+    ret,prev_frame = cap.read()
+    prev_gray = cv2.cvtColor(prev_frame,cv2.COLOR_BGR2GRAY)
+    while cap.isOpened():
+        ret,frame = cap.read()
+        if not ret: break
+        frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+        edge_prev = cv2.Canny(prev_gray,50,150)
+        edge = cv2.Canny(frame_gray,50,150)
+        diff = cv2.absdiff(edge_prev,edge)
+        cv2.imshow("Moving edges",diff)
+        if cv2.waitKey(30)&0xFF == ord('q'):
+            break
+        prev_gray = frame_gray.copy()
+    cap.release()
+    cv2.destroyAllWindows()
+path="camera.mp4"
+motion(path)
+---------------------------------------------------------------------------
+#Event detection 
+
+import cv2
+cap = cv2.VideoCapture("camera.mp4")
+bgSubtractor = cv2.createBackgroundSubtractorMOG2()
+while cap.isOpened():
+    ret,frame = cap.read()
+    if not ret :
+        break
+    mask = bgSubtractor.apply(frame)
+    _,threshold = cv2.threshold(mask,50,255,cv2.THRESH_BINARY)
+    contours,_ = cv2.findContours(threshold,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    for contour in contours:
+        if(cv2.contourArea(contour)>100):
+            x,y,w,h = cv2.boundingRect(contour)
+            cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.imshow('video',frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+cap.release()
+cv2.destroyAllWindows()
+

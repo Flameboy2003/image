@@ -86,7 +86,16 @@ cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 ------------------------------------------------------------------------
+#Object detection
 
+import torch 
+from PIL import Image
+import cv2 
+model = torch.hub.load("ultralytics/yolov5",'yolov5s')
+img = Image.open("spacex.jpg")
+result = model(img)
+result.show()
+---------------------------------------------------------------------------
 #Edge detection 
 
 import cv2
@@ -132,7 +141,7 @@ while cap.isOpened():
 cap.release()
 cv2.destroyAllWindows()
 ----------------------------------------------------------------------------------
-#smoothing                                                                                                                                                                                                                      import cv2
+#smoothing                                                                                                                                                         import cv2
 import matplotlib.pyplot as plt
 image = cv2.imread('x.jpg')
 plt.imshow(image)
